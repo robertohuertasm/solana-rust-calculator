@@ -2,6 +2,14 @@ use anchor_lang::prelude::*;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub enum Ops {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
 #[program]
 pub mod solana_calculator {
     use super::*;
@@ -9,6 +17,19 @@ pub mod solana_calculator {
     pub fn create(ctx: Context<Create>, init_message: String) -> ProgramResult {
         let calculator = &mut ctx.accounts.calculator;
         calculator.greeting = init_message;
+        Ok(())
+    }
+
+    pub fn op(ctx: Context<Operation>, op: Ops, num1: i64, num2: i64) -> ProgramResult {
+        let calculator = &mut ctx.accounts.calculator;
+        let (result, remainder) = match op {
+            Ops::Add => (num1 + num2, 0),
+            Ops::Sub => (num1 - num2, 0),
+            Ops::Mul => (num1 * num2, 0),
+            Ops::Div => (num1 / num2, num1 % num2),
+        };
+        calculator.result = result;
+        calculator.remainder = remainder;
         Ok(())
     }
 
