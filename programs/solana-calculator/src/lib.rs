@@ -8,8 +8,19 @@ pub enum Ops {
     Sub,
     Mul,
     Div,
+    Add2 { extra: i64 },
+    BuyBelowMarket { product: BuyBelowMarket },
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct BuyBelowMarket {
+    strike: Strike,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub enum Strike {
+    AbsoluteStrike { strike: i64 },
+}
 #[program]
 pub mod solana_calculator {
     use super::*;
@@ -27,6 +38,14 @@ pub mod solana_calculator {
             Ops::Sub => (num1 - num2, 0),
             Ops::Mul => (num1 * num2, 0),
             Ops::Div => (num1 / num2, num1 % num2),
+            Ops::Add2 { extra } => (num1 + num2 + extra, 0),
+            Ops::BuyBelowMarket { product } => {
+                let strike = match product.strike {
+                    Strike::AbsoluteStrike { strike } => strike,
+                };
+                let result = num1 + num2 + strike;
+                (result, 0)
+            }
         };
         calculator.result = result;
         calculator.remainder = remainder;
@@ -36,6 +55,13 @@ pub mod solana_calculator {
     pub fn add(ctx: Context<Operation>, num1: i64, num2: i64) -> ProgramResult {
         let calculator = &mut ctx.accounts.calculator;
         calculator.result = i64::saturating_add(num1, num2);
+        Ok(())
+    }
+
+    pub fn add2(ctx: Context<Operation>, num1: i64, num2: i64, extra: i64) -> ProgramResult {
+        let calculator = &mut ctx.accounts.calculator;
+        let intermediate = i64::saturating_add(num1, num2);
+        calculator.result = i64::saturating_add(intermediate, extra);
         Ok(())
     }
 

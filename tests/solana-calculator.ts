@@ -1,5 +1,5 @@
 import * as anchor from '@project-serum/anchor';
-import { IdlTypes, Program } from '@project-serum/anchor';
+import { Program } from '@project-serum/anchor';
 import * as assert from 'assert';
 import { SolanaCalculator } from '../target/types/solana_calculator';
 
@@ -37,7 +37,7 @@ describe('solana-calculator', () => {
 
   describe('Single Func', () => {
     it('Adds two numbers', async () => {
-      await program.rpc.op({ add: 1 }, new anchor.BN(2), new anchor.BN(3), {
+      await program.rpc.op({ add: {} }, new anchor.BN(2), new anchor.BN(3), {
         accounts: {
           calculator: calculator.publicKey,
         },
@@ -49,8 +49,50 @@ describe('solana-calculator', () => {
       assert.ok(account.greeting === 'Welcome to Solana');
     });
 
+    it('BuyBelowMarket', async () => {
+      await program.rpc.op(
+        {
+          buyBelowMarket: {
+            product: {
+              strike: { absoluteStrike: { strike: new anchor.BN(1) } },
+            },
+          },
+        },
+        new anchor.BN(2),
+        new anchor.BN(3),
+        {
+          accounts: {
+            calculator: calculator.publicKey,
+          },
+        }
+      );
+
+      const account = await getCalculatorAccount();
+
+      assert.ok(account.result.eq(new anchor.BN(6)));
+      assert.ok(account.greeting === 'Welcome to Solana');
+    });
+
+    it('Adds two numbers + extra', async () => {
+      await program.rpc.op(
+        { add2: { extra: new anchor.BN(1) } },
+        new anchor.BN(2),
+        new anchor.BN(3),
+        {
+          accounts: {
+            calculator: calculator.publicKey,
+          },
+        }
+      );
+
+      const account = await getCalculatorAccount();
+
+      assert.ok(account.result.eq(new anchor.BN(6)));
+      assert.ok(account.greeting === 'Welcome to Solana');
+    });
+
     it('Multiplies two numbers', async () => {
-      await program.rpc.op({ mul: 1 }, new anchor.BN(2), new anchor.BN(3), {
+      await program.rpc.op({ mul: {} }, new anchor.BN(2), new anchor.BN(3), {
         accounts: {
           calculator: calculator.publicKey,
         },
@@ -63,7 +105,7 @@ describe('solana-calculator', () => {
     });
 
     it('Subtracts two numbers', async () => {
-      await program.rpc.op({ sub: 1 }, new anchor.BN(32), new anchor.BN(33), {
+      await program.rpc.op({ sub: {} }, new anchor.BN(32), new anchor.BN(33), {
         accounts: {
           calculator: calculator.publicKey,
         },
@@ -76,7 +118,7 @@ describe('solana-calculator', () => {
     });
 
     it('Divides two numbers', async () => {
-      await program.rpc.op({ div: 1 }, new anchor.BN(10), new anchor.BN(3), {
+      await program.rpc.op({ div: {} }, new anchor.BN(10), new anchor.BN(3), {
         accounts: {
           calculator: calculator.publicKey,
         },
@@ -101,6 +143,24 @@ describe('solana-calculator', () => {
       const account = await getCalculatorAccount();
 
       assert.ok(account.result.eq(new anchor.BN(5)));
+      assert.ok(account.greeting === 'Welcome to Solana');
+    });
+
+    it('Adds three numbers', async () => {
+      await program.rpc.add2(
+        new anchor.BN(2),
+        new anchor.BN(3),
+        new anchor.BN(2),
+        {
+          accounts: {
+            calculator: calculator.publicKey,
+          },
+        }
+      );
+
+      const account = await getCalculatorAccount();
+
+      assert.ok(account.result.eq(new anchor.BN(7)));
       assert.ok(account.greeting === 'Welcome to Solana');
     });
 
